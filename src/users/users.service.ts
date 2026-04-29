@@ -3,9 +3,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { User, Prisma } from 'src/generated/prisma/client.js';
 export type UserWithFullName = User & { fullName: string };
 
-function addFullName(user: User): UserWithFullName {
-  return { ...user, fullName: `${user.firstName} ${user.lastName}` };
-}
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -14,7 +11,7 @@ export class UsersService {
     return this.prisma.user.create({ data });
   }
 
-  async findAll(params: {
+  findAll(params: {
     skip?: number;
     take?: number;
     cursor?: Prisma.UserWhereUniqueInput;
@@ -22,14 +19,7 @@ export class UsersService {
     orderBy?: Prisma.UserOrderByWithRelationInput;
   }): Promise<User[]> {
     const { skip, take, cursor, where, orderBy } = params;
-    const users = await this.prisma.user.findMany({
-      skip,
-      take,
-      cursor,
-      where,
-      orderBy,
-    });
-    return users.map(addFullName);
+    return this.prisma.user.findMany({ skip, take, cursor, where, orderBy });
   }
 
   async findOne(
@@ -39,7 +29,7 @@ export class UsersService {
       where: userWhereUniqueInput,
     });
     if (!user) throw new NotFoundException(`User not found`);
-    return addFullName(user);
+    return user;
   }
 
   async update(params: {

@@ -14,6 +14,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from 'src/generated/prisma/client.js';
+import { GetUserDto } from './dto/get-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -26,13 +27,15 @@ export class UsersController {
   }
 
   @Get()
-  findAll(): Promise<User[]> {
-    return this.usersService.findAll({});
+  async findAll(): Promise<GetUserDto[]> {
+    const users = await this.usersService.findAll({});
+    return users.map((user) => GetUserDto.fromUser(user));
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
-    return this.usersService.findOne({ id });
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<GetUserDto> {
+    const user = await this.usersService.findOne({ id });
+    return GetUserDto.fromUser(user);
   }
 
   @Patch(':id')
