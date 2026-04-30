@@ -16,11 +16,15 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from 'src/generated/prisma/client.js';
 import { GetUserDto } from './dto/get-user.dto';
-import { CursorPaginationParams, CursorPaginationPipe } from '../common/pipes/cursor-pagination.pipe';
+import {
+  CursorPaginationParams,
+  CursorPaginationPipe,
+} from '../common/pipes/cursor-pagination.pipe';
 import {
   OffsetPaginationParams,
   OffsetPaginationPipe,
 } from 'src/common/pipes/offset-pagination.pipe';
+import { GetUserDetailDto } from './dto/get-user-detail.dto';
 
 @Controller('users')
 export class UsersController {
@@ -70,7 +74,7 @@ export class UsersController {
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<GetUserDto> {
     const user = await this.usersService.findOne({ id });
-    return GetUserDto.fromUser(user);
+    return GetUserDetailDto.fromUser(user);
   }
 
   @Patch(':id')

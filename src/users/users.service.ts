@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User, Prisma } from 'src/generated/prisma/client.js';
+import { User, Prisma, Commission } from 'src/generated/prisma/client.js';
 import { OffsetPaginationParams } from 'src/common/pipes/offset-pagination.pipe';
 import { CursorPaginationParams } from 'src/common/pipes/cursor-pagination.pipe';
 export type UserWithFullName = User & { fullName: string };
-
+export type UserWithCommissions = User & { commissions?: Commission[] };
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -49,9 +49,10 @@ export class UsersService {
 
   async findOne(
     userWhereUniqueInput: Prisma.UserWhereUniqueInput,
-  ): Promise<User> {
+  ): Promise<UserWithCommissions> {
     const user = await this.prisma.user.findUnique({
       where: userWhereUniqueInput,
+      include: { commissions: true },
     });
     if (!user) throw new NotFoundException(`User not found`);
     return user;

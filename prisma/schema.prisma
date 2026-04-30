@@ -24,8 +24,7 @@ model User {
 model Commission {
   id          Int               @id @default(autoincrement())
   title       String
-  description String?
-
+  description String
   status      CommissionStatus  @default(PENDING)
 
   user        User              @relation(fields: [userId], references: [id])
