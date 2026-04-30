@@ -16,7 +16,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from 'src/generated/prisma/client.js';
 import { GetUserDto } from './dto/get-user.dto';
-import { PaginationDto } from './dto/pagination.dto';
+import { CursorPaginationParams, CursorPaginationPipe } from '../common/pipes/cursor-pagination.pipe';
+import {
+  OffsetPaginationParams,
+  OffsetPaginationPipe,
+} from 'src/common/pipes/offset-pagination.pipe';
 
 @Controller('users')
 export class UsersController {
@@ -35,16 +39,32 @@ export class UsersController {
   }*/
 
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto): Promise<GetUserDto[]> {
-    const { page = 1, limit = 10, cursor } = paginationDto;
-    const skip = (page - 1) * limit;
-    const take = limit;
-    const users = await this.usersService.findAll({
-      skip,
-      take,
-      cursor: cursor ? { id: cursor } : undefined,
-    });
-    return users.map((user) => GetUserDto.fromUser(user));
+  async findAll(
+    @Query(OffsetPaginationPipe) pagination: OffsetPaginationParams,
+  ) {
+    const { data, total, page, limit, totalPages } =
+      await this.usersService.findAll(pagination);
+    return {
+      data: data.map((user) => GetUserDto.fromUser(user)),
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
+  // Must be declared before :id to avoid route conflict
+  @Get('cursor')
+  async findAllWithCursor(
+    @Query(CursorPaginationPipe) params: CursorPaginationParams,
+  ) {
+    const { data, nextCursor, hasNextPage } =
+      await this.usersService.findAllWithCursor(params);
+    return {
+      data: data.map((user) => GetUserDto.fromUser(user)),
+      nextCursor,
+      hasNextPage,
+    };
   }
 
   @Get(':id')
