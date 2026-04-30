@@ -9,11 +9,14 @@ import {
   HttpCode,
   ParseIntPipe,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from 'src/generated/prisma/client.js';
+import { GetUserDto } from './dto/get-user.dto';
+import { PaginationDto } from './dto/pagination.dto';
 
 @Controller('users')
 export class UsersController {
@@ -25,14 +28,29 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  /*@Get()
+  async findAll(): Promise<GetUserDto[]> {
+    const users = await this.usersService.findAll({});
+    return users.map((user) => GetUserDto.fromUser(user));
+  }*/
+
   @Get()
-  findAll(): Promise<User[]> {
-    return this.usersService.findAll({});
+  async findAll(@Query() paginationDto: PaginationDto): Promise<GetUserDto[]> {
+    const { page = 1, limit = 10, cursor } = paginationDto;
+    const skip = (page - 1) * limit;
+    const take = limit;
+    const users = await this.usersService.findAll({
+      skip,
+      take,
+      cursor: cursor ? { id: cursor } : undefined,
+    });
+    return users.map((user) => GetUserDto.fromUser(user));
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
-    return this.usersService.findOne({ id });
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<GetUserDto> {
+    const user = await this.usersService.findOne({ id });
+    return GetUserDto.fromUser(user);
   }
 
   @Patch(':id')

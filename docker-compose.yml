@@ -12,12 +12,17 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: tpnest-api
     ports:
       - '3001:3001'
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tpnest
+    volumes:
+      - .:/app # monte ton code local dans le conteneur
+      - /app/node_modules # garde les node_modules du conteneur
     depends_on:
       - postgres
 
