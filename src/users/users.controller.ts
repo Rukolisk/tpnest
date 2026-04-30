@@ -6,9 +6,7 @@ import {
   Patch,
   Param,
   Delete,
-  HttpCode,
   ParseIntPipe,
-  HttpStatus,
   Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -16,14 +14,26 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from 'src/generated/prisma/client.js';
 import { GetUserDto } from './dto/get-user.dto';
-import { PaginationDto } from './dto/pagination.dto';
+import {
+  CursorPaginationParams,
+  CursorPaginationPipe,
+} from '../common/pipes/cursor-pagination.pipe';
+import {
+  OffsetPaginationParams,
+  OffsetPaginationPipe,
+} from 'src/common/pipes/offset-pagination.pipe';
+import { GetUserDetailDto } from './dto/get-user-detail.dto';
+import {
+  ApiCreated,
+  ApiNoContent,
+} from 'src/common/decorators/api-response.decorator';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED) // 201
+  @ApiCreated()
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.usersService.create(createUserDto);
   }
@@ -35,22 +45,38 @@ export class UsersController {
   }*/
 
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto): Promise<GetUserDto[]> {
-    const { page = 1, limit = 10, cursor } = paginationDto;
-    const skip = (page - 1) * limit;
-    const take = limit;
-    const users = await this.usersService.findAll({
-      skip,
-      take,
-      cursor: cursor ? { id: cursor } : undefined,
-    });
-    return users.map((user) => GetUserDto.fromUser(user));
+  async findAll(
+    @Query(OffsetPaginationPipe) pagination: OffsetPaginationParams,
+  ) {
+    const { data, total, page, limit, totalPages } =
+      await this.usersService.findAll(pagination);
+    return {
+      data: data.map((user) => GetUserDto.fromUser(user)),
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
+  // Must be declared before :id to avoid route conflict
+  @Get('cursor')
+  async findAllWithCursor(
+    @Query(CursorPaginationPipe) params: CursorPaginationParams,
+  ) {
+    const { data, nextCursor, hasNextPage } =
+      await this.usersService.findAllWithCursor(params);
+    return {
+      data: data.map((user) => GetUserDto.fromUser(user)),
+      nextCursor,
+      hasNextPage,
+    };
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<GetUserDto> {
     const user = await this.usersService.findOne({ id });
-    return GetUserDto.fromUser(user);
+    return GetUserDetailDto.fromUser(user);
   }
 
   @Patch(':id')
@@ -62,7 +88,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT) // 204
+  @ApiNoContent()
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.usersService.remove({ id });
   }
