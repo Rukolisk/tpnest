@@ -6,9 +6,7 @@ import {
   Patch,
   Param,
   Delete,
-  HttpCode,
   ParseIntPipe,
-  HttpStatus,
   Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -25,13 +23,17 @@ import {
   OffsetPaginationPipe,
 } from 'src/common/pipes/offset-pagination.pipe';
 import { GetUserDetailDto } from './dto/get-user-detail.dto';
+import {
+  ApiCreated,
+  ApiNoContent,
+} from 'src/common/decorators/api-response.decorator';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED) // 201
+  @ApiCreated()
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.usersService.create(createUserDto);
   }
@@ -86,7 +88,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT) // 204
+  @ApiNoContent()
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.usersService.remove({ id });
   }

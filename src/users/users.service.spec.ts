@@ -1,18 +1,43 @@
-import { Test, TestingModule } from '@nestjs/testing';
+// users.service.spec.ts
 import { UsersService } from './users.service';
+import {
+  setupTestDb,
+  teardownTestDb,
+  cleanDatabase,
+  TestContext,
+} from 'src/common/test/setup-test-db';
 
-describe('UsersService', () => {
+describe('UsersService (integration)', () => {
+  let ctx: TestContext;
   let service: UsersService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService],
-    }).compile();
+  beforeAll(async () => {
+    ctx = await setupTestDb();
+    service = ctx.module.get<UsersService>(UsersService);
+  }, 60_000); // Testcontainers peut prendre du temps au démarrage
 
-    service = module.get<UsersService>(UsersService);
+  afterEach(async () => {
+    await cleanDatabase(ctx.prisma);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  afterAll(async () => {
+    await teardownTestDb(ctx);
+  });
+
+  it('should create a user', async () => {
+    const user = await service.create({
+      email: 'test@test.com',
+      firstName: 'Bastien',
+      lastName: 'Dupont',
+    });
+
+    expect(user.email).toBe('test@test.com');
+    expect(user.firstName).toBe('Bastien');
+  });
+
+  it('should throw NotFoundException if user not found', async () => {
+    await expect(service.findOne({ id: 999 })).rejects.toThrow(
+      'User not found',
+    );
   });
 });
