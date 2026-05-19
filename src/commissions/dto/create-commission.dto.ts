@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateCommissionDto {
   @IsString()
@@ -9,7 +9,7 @@ export class CreateCommissionDto {
   @IsNotEmpty({ message: 'Description is required' })
   description: string;
 
+  @IsString()
   @IsNotEmpty({ message: 'User ID is required' })
-  @IsNumber({}, { message: 'User ID must be a number' })
-  userId: number;
+  userId: string;
 }

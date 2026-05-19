@@ -1,8 +1,9 @@
 import { User, Commission } from 'src/generated/prisma/client';
 
 type UserWithCommissions = User & { commissions?: Commission[] };
+
 export class GetUserDetailDto implements Partial<User> {
-  id?: number;
+  id?: string;
   email?: string;
   firstName?: string;
   lastName?: string;
@@ -14,9 +15,9 @@ export class GetUserDetailDto implements Partial<User> {
     const dto = new GetUserDetailDto();
     dto.id = user.id;
     dto.email = user.email;
-    dto.firstName = user.firstName;
-    dto.lastName = user.lastName;
-    dto.fullName = `${user.firstName} ${user.lastName}`;
+    dto.firstName = user.firstName ?? undefined;
+    dto.lastName = user.lastName ?? undefined;
+    dto.fullName = user.name;
     dto.createdAt = user.createdAt;
     dto.commissions = (user.commissions ?? []).map((c) => ({
       title: c.title,

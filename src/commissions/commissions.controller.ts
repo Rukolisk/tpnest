@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { CommissionsService } from './commissions.service';
 import { CreateCommissionDto } from './dto/create-commission.dto';
@@ -16,6 +17,7 @@ import {
   ApiCreated,
   ApiNoContent,
 } from 'src/common/decorators/api-response.decorator';
+
 @Controller('commissions')
 export class CommissionsController {
   constructor(private readonly commissionsService: CommissionsService) {}
@@ -38,13 +40,13 @@ export class CommissionsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.commissionsService.findOne({ id });
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateCommissionDto: UpdateCommissionDto,
   ) {
     return this.commissionsService.update({
@@ -55,7 +57,7 @@ export class CommissionsController {
 
   @Patch(':id/status')
   updateStatus(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateStatusDto: UpdateStatusCommissionDto,
   ) {
     return this.commissionsService.update({
@@ -66,7 +68,7 @@ export class CommissionsController {
 
   @Delete(':id')
   @ApiNoContent()
-  remove(@Param('id') id: number) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.commissionsService.remove({ id });
   }
 }
