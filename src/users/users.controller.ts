@@ -27,7 +27,8 @@ import {
   ApiNoContent,
 } from 'src/common/decorators/api-response.decorator';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
-
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { Role } from 'src/common/enums/role.enum';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -72,6 +73,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Roles(Role.USER, Role.ADMIN)
   async findOne(@Param('id') id: string): Promise<GetUserDto> {
     const user = await this.usersService.findOne({ id });
     return GetUserDetailDto.fromUser(user);
@@ -86,6 +88,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN)
   @ApiNoContent()
   async remove(@Param('id') id: string): Promise<void> {
     await this.usersService.remove({ id });
