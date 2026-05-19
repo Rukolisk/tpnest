@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  ParseIntPipe,
   Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -27,6 +26,7 @@ import {
   ApiCreated,
   ApiNoContent,
 } from 'src/common/decorators/api-response.decorator';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 
 @Controller('users')
 export class UsersController {
@@ -34,17 +34,15 @@ export class UsersController {
 
   @Post()
   @ApiCreated()
+  @AllowAnonymous()
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.create(createUserDto);
+    const { firstName, lastName, ...rest } = createUserDto;
+    const name = [firstName, lastName].filter(Boolean).join(' ') || rest.email;
+    return this.usersService.create({ ...rest, firstName, lastName, name });
   }
 
-  /*@Get()
-  async findAll(): Promise<GetUserDto[]> {
-    const users = await this.usersService.findAll({});
-    return users.map((user) => GetUserDto.fromUser(user));
-  }*/
-
   @Get()
+  @AllowAnonymous()
   async findAll(
     @Query(OffsetPaginationPipe) pagination: OffsetPaginationParams,
   ) {
@@ -74,14 +72,14 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<GetUserDto> {
+  async findOne(@Param('id') id: string): Promise<GetUserDto> {
     const user = await this.usersService.findOne({ id });
     return GetUserDetailDto.fromUser(user);
   }
 
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
     return this.usersService.update({ where: { id }, data: updateUserDto });
@@ -89,7 +87,7 @@ export class UsersController {
 
   @Delete(':id')
   @ApiNoContent()
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async remove(@Param('id') id: string): Promise<void> {
     await this.usersService.remove({ id });
   }
 }

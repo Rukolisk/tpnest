@@ -3,8 +3,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { User, Prisma, Commission } from 'src/generated/prisma/client.js';
 import { OffsetPaginationParams } from 'src/common/pipes/offset-pagination.pipe';
 import { CursorPaginationParams } from 'src/common/pipes/cursor-pagination.pipe';
+
 export type UserWithFullName = User & { fullName: string };
 export type UserWithCommissions = User & { commissions?: Commission[] };
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -14,7 +16,6 @@ export class UsersService {
   }
 
   async findAll(pagination: OffsetPaginationParams) {
-    // Run both queries in parallel — count() has no dependency on the data query
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({
         skip: (pagination.page - 1) * pagination.limit,
@@ -31,15 +32,15 @@ export class UsersService {
       totalPages: Math.ceil(total / pagination.limit),
     };
   }
+
   async findAllWithCursor(params: CursorPaginationParams) {
     const items = await this.prisma.user.findMany({
       take: params.limit + 1,
       skip: params.cursor ? 1 : 0,
-      cursor: params.cursor ? { id: Number(params.cursor) } : undefined,
+      cursor: params.cursor ? { id: String(params.cursor) } : undefined,
       orderBy: { id: 'asc' },
     });
 
-    // The extra item confirms there is a next page — strip it before returning
     const hasNextPage = items.length > params.limit;
     const data = hasNextPage ? items.slice(0, params.limit) : items;
     const nextCursor = hasNextPage ? (data[data.length - 1]?.id ?? null) : null;
@@ -62,12 +63,12 @@ export class UsersService {
     where: Prisma.UserWhereUniqueInput;
     data: Prisma.UserUpdateInput;
   }): Promise<User> {
-    await this.findOne(params.where); // 404 si inexistant
+    await this.findOne(params.where);
     return this.prisma.user.update({ data: params.data, where: params.where });
   }
 
   async remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    await this.findOne(where); // 404 si inexistant
+    await this.findOne(where);
     return this.prisma.user.delete({ where });
   }
 }
