@@ -6,6 +6,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { auth } from './utils/auth';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './common/guards/roles.guard';
+
 @Module({
   imports: [
     AuthModule.forRoot({ auth }),
@@ -14,6 +17,6 @@ import { auth } from './utils/auth';
     CommissionsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: RolesGuard }],
 })
 export class AppModule {}
